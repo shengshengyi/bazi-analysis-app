@@ -1,0 +1,38 @@
+{
+  "name": "bazi-analysis-app",
+  "version": "1.0.0",
+  "description": "八字分析应用 - 基于 bazi-mcp",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "vercel-build": "npm run build"
+  },
+  "keywords": [
+    "bazi",
+    "八字",
+    "命理",
+    "mcp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.2.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
