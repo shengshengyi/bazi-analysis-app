@@ -1,19 +1,44 @@
-# 八字分析应用 (Bazi Analysis App)
+# 八字分析应用 V2.0 (Bazi Analysis App)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-22+-green.svg" alt="Node.js 22+">
   <img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript 5.0+">
   <img src="https://img.shields.io/badge/MCP-Protocol-orange.svg" alt="MCP Protocol">
+  <img src="https://img.shields.io/badge/AI-Powered-purple.svg" alt="AI Powered">
   <img src="https://img.shields.io/badge/License-ISC-yellow.svg" alt="License: ISC">
 </p>
 
 <p align="center">
-  <b>基于参天AI (Cantian AI) bazi-mcp 的精准八字排盘与五维分析应用</b>
+  <b>🎯 精准八字排盘 + 🤖 AI智能解盘 + 📚 多流派支持</b>
+  <br>
+  <small>支持 OpenAI / Claude / DeepSeek / 通义千问(千问百炼)</small>
 </p>
 
 ---
 
-## 目录
+## ✨ V2.0 新特性
+
+| 特性 | 描述 |
+|------|------|
+| 🤖 **AI智能解盘** | 基于大模型的智能八字解读 |
+| 🎭 **五大流派** | 旺衰派/子平派/盲派/格局派/新派 |
+| 🔌 **多AI支持** | OpenAI / Claude / DeepSeek / 通义千问 |
+| 💬 **对话式解盘** | 与AI实时交流，深入探讨命理 |
+| ⚙️ **可配置AI** | UI界面配置API Key和模型参数 |
+
+---
+
+## 支持的AI服务商
+
+| 服务商 | 模型 | 特点 |
+|--------|------|------|
+| **OpenAI** | GPT-4o / GPT-4o Mini | 强大通用能力 |
+| **Anthropic** | Claude 3.5 Sonnet / Haiku | 优秀推理能力 |
+| **DeepSeek** | DeepSeek Chat / Coder | 中文优化 |
+| **通义千问** | Qwen Max / Plus / Turbo / Coder | 阿里云百炼平台，国内友好 |
+| **自定义** | 任意OpenAI兼容API | 灵活扩展 |
+
+---
 
 - [项目简介](#项目简介)
 - [功能特性](#功能特性)

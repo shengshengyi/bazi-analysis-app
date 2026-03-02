@@ -4,7 +4,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import type { BaziData } from '../models/types.js';
 
 // AI提供商类型
-export type AIProvider = 'openai' | 'anthropic' | 'deepseek' | 'custom';
+export type AIProvider = 'openai' | 'anthropic' | 'deepseek' | 'qwen' | 'custom';
 
 // AI配置接口
 export interface AIConfig {
@@ -14,6 +14,16 @@ export interface AIConfig {
   model: string;
   temperature: number;
   maxTokens: number;
+}
+
+// 提供商配置定义
+export interface ProviderConfig {
+  id: AIProvider;
+  name: string;
+  description: string;
+  defaultBaseUrl?: string;
+  models: { id: string; name: string; description?: string }[];
+  requireApiKey: boolean;
 }
 
 // 流派配置接口
@@ -41,6 +51,70 @@ export const defaultAIConfig: AIConfig = {
   model: 'gpt-4o-mini',
   temperature: 0.7,
   maxTokens: 2000
+};
+
+// 提供商配置列表
+export const providers: Record<AIProvider, ProviderConfig> = {
+  openai: {
+    id: 'openai',
+    name: 'OpenAI',
+    description: 'OpenAI官方API',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+    requireApiKey: true,
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o', description: '最强大的多模态模型' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: '快速且经济实惠' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: '高性能模型' },
+      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: '性价比之选' }
+    ]
+  },
+  anthropic: {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    description: 'Claude系列模型',
+    defaultBaseUrl: 'https://api.anthropic.com/v1',
+    requireApiKey: true,
+    models: [
+      { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: '最智能的Claude模型' },
+      { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: '快速响应' },
+      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: '复杂任务专家' }
+    ]
+  },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    description: '深度求索大模型',
+    defaultBaseUrl: 'https://api.deepseek.com/v1',
+    requireApiKey: true,
+    models: [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', description: '通用对话模型' },
+      { id: 'deepseek-coder', name: 'DeepSeek Coder', description: '代码专用模型' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', description: '推理增强模型' }
+    ]
+  },
+  qwen: {
+    id: 'qwen',
+    name: '通义千问',
+    description: '阿里云通义千问大模型',
+    defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    requireApiKey: true,
+    models: [
+      { id: 'qwen-max', name: 'Qwen Max', description: '通义千问最强模型' },
+      { id: 'qwen-plus', name: 'Qwen Plus', description: '均衡性能与速度' },
+      { id: 'qwen-turbo', name: 'Qwen Turbo', description: '快速响应' },
+      { id: 'qwen-coder-plus', name: 'Qwen Coder Plus', description: '编程专用' },
+      { id: 'qwen-coder-turbo', name: 'Qwen Coder Turbo', description: '快速编程助手' }
+    ]
+  },
+  custom: {
+    id: 'custom',
+    name: '自定义',
+    description: '自定义OpenAI兼容API',
+    requireApiKey: true,
+    models: [
+      { id: 'custom-model', name: '自定义模型', description: '请输入模型名称' }
+    ]
+  }
 };
 
 // 五大流派配置
@@ -186,6 +260,16 @@ export function getSchool(id: string): SchoolConfig | undefined {
   return schools[id];
 }
 
+// 获取所有提供商
+export function getAllProviders(): ProviderConfig[] {
+  return Object.values(providers);
+}
+
+// 获取指定提供商
+export function getProvider(id: AIProvider): ProviderConfig | undefined {
+  return providers[id];
+}
+
 // 构建系统提示词
 export function buildSystemPrompt(school: SchoolConfig, baziData: BaziData): string {
   return `${school.systemPrompt}
@@ -263,24 +347,38 @@ export class AIService {
 
   // 获取模型实例
   private getModel() {
+    const baseConfig: any = {};
+    if (this.config.apiKey) {
+      baseConfig.apiKey = this.config.apiKey;
+    }
+    if (this.config.baseUrl) {
+      baseConfig.baseURL = this.config.baseUrl;
+    }
+
     switch (this.config.provider) {
       case 'openai':
-        return openai(this.config.model);
+        return openai(this.config.model, baseConfig);
       case 'anthropic':
-        return anthropic(this.config.model);
+        return anthropic(this.config.model, baseConfig);
       case 'deepseek':
         // DeepSeek兼容OpenAI接口
         return openai(this.config.model, {
-          apiKey: this.config.apiKey,
+          ...baseConfig,
           baseURL: this.config.baseUrl || 'https://api.deepseek.com/v1'
+        });
+      case 'qwen':
+        // 千问百炼兼容OpenAI接口
+        return openai(this.config.model, {
+          ...baseConfig,
+          baseURL: this.config.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
         });
       case 'custom':
         return openai(this.config.model, {
-          apiKey: this.config.apiKey,
+          ...baseConfig,
           baseURL: this.config.baseUrl
         });
       default:
-        return openai(this.config.model);
+        return openai(this.config.model, baseConfig);
     }
   }
 }

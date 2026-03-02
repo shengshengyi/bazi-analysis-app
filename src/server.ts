@@ -23,6 +23,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // API 路由
 app.use('/api/bazi', baziRoutes);
 app.use('/api/analyze', analyzeRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

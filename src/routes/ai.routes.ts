@@ -1,8 +1,35 @@
 import { Router } from 'express';
-import { AIService, getAIService, initAIService, getAllSchools, getSchool, type AIConfig } from '../ai/ai.service.js';
+import { AIService, getAIService, initAIService, getAllSchools, getSchool, getAllProviders, type AIConfig } from '../ai/ai.service.js';
 import type { ApiResponse } from '../models/types.js';
 
 const router = Router();
+
+/**
+ * GET /api/ai/providers
+ * 获取所有AI提供商列表
+ */
+router.get('/providers', (req, res) => {
+  try {
+    const providers = getAllProviders().map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      requireApiKey: p.requireApiKey,
+      models: p.models
+    }));
+
+    res.json({
+      success: true,
+      data: providers
+    } as ApiResponse<any>);
+  } catch (error) {
+    console.error('获取提供商列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取提供商列表失败'
+    } as ApiResponse<never>);
+  }
+});
 
 /**
  * POST /api/ai/chat

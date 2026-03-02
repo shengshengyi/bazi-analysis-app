@@ -1,5 +1,60 @@
 // AI对话功能
 
+// 提供商和模型配置
+const providerModels = {
+  openai: {
+    name: 'OpenAI',
+    apiKeyPlaceholder: 'sk-...',
+    apiKeyHelp: 'OpenAI API Key 格式: sk-...',
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o', desc: '最强大的多模态模型' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', desc: '快速且经济实惠（推荐）' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', desc: '高性能模型' },
+      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', desc: '性价比之选' }
+    ]
+  },
+  anthropic: {
+    name: 'Anthropic Claude',
+    apiKeyPlaceholder: 'sk-ant-...',
+    apiKeyHelp: 'Claude API Key 格式: sk-ant-...',
+    models: [
+      { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', desc: '最智能的Claude模型' },
+      { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', desc: '快速响应' },
+      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', desc: '复杂任务专家' }
+    ]
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    apiKeyPlaceholder: 'sk-...',
+    apiKeyHelp: 'DeepSeek API Key',
+    models: [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', desc: '通用对话模型' },
+      { id: 'deepseek-coder', name: 'DeepSeek Coder', desc: '代码专用模型' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', desc: '推理增强模型' }
+    ]
+  },
+  qwen: {
+    name: '通义千问',
+    apiKeyPlaceholder: 'sk-...',
+    apiKeyHelp: '阿里云DashScope API Key，从百炼平台获取',
+    models: [
+      { id: 'qwen-max', name: 'Qwen Max', desc: '通义千问最强模型' },
+      { id: 'qwen-plus', name: 'Qwen Plus', desc: '均衡性能与速度（推荐）' },
+      { id: 'qwen-turbo', name: 'Qwen Turbo', desc: '快速响应' },
+      { id: 'qwen-coder-plus', name: 'Qwen Coder Plus', desc: '编程专用' },
+      { id: 'qwen-coder-turbo', name: 'Qwen Coder Turbo', desc: '快速编程助手' }
+    ]
+  },
+  custom: {
+    name: '自定义',
+    apiKeyPlaceholder: 'your-api-key',
+    apiKeyHelp: '自定义API的Key',
+    models: [
+      { id: 'custom-model', name: '自定义模型', desc: '请输入模型名称' }
+    ]
+  }
+};
+
 // 状态管理
 const aiState = {
   currentSchool: 'wangshuai',
@@ -23,6 +78,7 @@ const aiElements = {
   modalClose: document.querySelector('.modal-close'),
   provider: document.getElementById('ai-provider'),
   apiKey: document.getElementById('ai-apikey'),
+  apiKeyHelp: document.getElementById('apikey-help'),
   baseUrl: document.getElementById('ai-baseurl'),
   model: document.getElementById('ai-model'),
   temperature: document.getElementById('ai-temperature'),
@@ -41,7 +97,7 @@ const schoolDescriptions = {
 // 初始化AI功能
 function initAIFeature() {
   bindAIEvents();
-  loadSchools();
+  updateModelOptions('openai');
   console.log('AI解盘功能已初始化');
 }
 
@@ -100,34 +156,49 @@ function bindAIEvents() {
     });
   }
 
-  // 提供商切换
+  // 提供商切换 - 更新模型列表和API Key提示
   if (aiElements.provider) {
     aiElements.provider.addEventListener('change', (e) => {
+      const provider = e.target.value;
+      updateModelOptions(provider);
+      updateApiKeyHelp(provider);
+
+      // 显示/隐藏自定义URL输入
       const customOnly = document.querySelectorAll('.custom-only');
       customOnly.forEach(el => {
-        el.classList.toggle('hidden', e.target.value !== 'custom');
+        el.classList.toggle('hidden', provider !== 'custom');
       });
     });
   }
+}
+
+// 更新模型选项
+function updateModelOptions(provider) {
+  if (!aiElements.model) return;
+
+  const config = providerModels[provider];
+  if (!config) return;
+
+  aiElements.model.innerHTML = config.models.map(m =>
+    `<option value="${m.id}">${m.name} - ${m.desc}</option>`
+  ).join('');
+}
+
+// 更新API Key帮助文本
+function updateApiKeyHelp(provider) {
+  if (!aiElements.apiKeyHelp || !aiElements.apiKey) return;
+
+  const config = providerModels[provider];
+  if (!config) return;
+
+  aiElements.apiKeyHelp.textContent = config.apiKeyHelp;
+  aiElements.apiKey.placeholder = config.apiKeyPlaceholder;
 }
 
 // 更新流派描述
 function updateSchoolDesc() {
   if (aiElements.schoolDesc) {
     aiElements.schoolDesc.textContent = schoolDescriptions[aiState.currentSchool];
-  }
-}
-
-// 加载流派列表
-async function loadSchools() {
-  try {
-    const response = await fetch('/api/ai/schools');
-    const result = await response.json();
-    if (result.success) {
-      console.log('可用流派:', result.data);
-    }
-  } catch (error) {
-    console.error('加载流派失败:', error);
   }
 }
 
@@ -283,7 +354,11 @@ async function loadAIConfig() {
     const result = await response.json();
     if (result.success) {
       const config = result.data;
-      if (aiElements.provider) aiElements.provider.value = config.provider;
+      if (aiElements.provider) {
+        aiElements.provider.value = config.provider;
+        updateModelOptions(config.provider);
+        updateApiKeyHelp(config.provider);
+      }
       if (aiElements.model) aiElements.model.value = config.model;
       if (aiElements.temperature) {
         aiElements.temperature.value = config.temperature;
@@ -300,7 +375,7 @@ async function saveAIConfig() {
   const config = {
     provider: aiElements.provider.value,
     apiKey: aiElements.apiKey.value || undefined,
-    baseUrl: aiElements.baseUrl.value || undefined,
+    baseUrl: aiElements.baseUrl?.value || undefined,
     model: aiElements.model.value,
     temperature: parseFloat(aiElements.temperature.value)
   };
@@ -314,7 +389,7 @@ async function saveAIConfig() {
 
     const result = await response.json();
     if (result.success) {
-      addSystemMessage('AI配置已更新');
+      addSystemMessage('AI配置已更新：' + providerModels[config.provider].name);
       closeConfigModal();
     } else {
       alert('配置保存失败：' + result.error);

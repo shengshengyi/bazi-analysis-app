@@ -339,6 +339,7 @@
             <option value="openai">OpenAI (GPT-4)</option>
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="deepseek">DeepSeek</option>
+            <option value="qwen">通义千问 (千问百炼)</option>
             <option value="custom">自定义</option>
           </select>
         </div>
@@ -346,6 +347,7 @@
         <div class="form-group">
           <label>API Key <small>(可选，不填使用默认配置)</small></label>
           <input type="password" id="ai-apikey" placeholder="sk-...">
+          <small id="apikey-help" class="help-text">OpenAI API Key 格式: sk-...</small>
         </div>
 
         <div class="form-group custom-only hidden">
@@ -356,11 +358,7 @@
         <div class="form-group">
           <label>模型</label>
           <select id="ai-model">
-            <option value="gpt-4o-mini">GPT-4o Mini (推荐)</option>
-            <option value="gpt-4o">GPT-4o</option>
-            <option value="claude-3-haiku">Claude 3 Haiku</option>
-            <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-            <option value="deepseek-chat">DeepSeek Chat</option>
+            <!-- 动态加载 -->
           </select>
         </div>
 
