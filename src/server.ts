@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import baziRoutes from './routes/bazi.routes.js';
 import analyzeRoutes from './routes/analyze.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

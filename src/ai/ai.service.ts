@@ -1,0 +1,301 @@
+import { generateText, streamText, type Message } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { anthropic } from '@ai-sdk/anthropic';
+import type { BaziData } from '../models/types.js';
+
+// AI提供商类型
+export type AIProvider = 'openai' | 'anthropic' | 'deepseek' | 'custom';
+
+// AI配置接口
+export interface AIConfig {
+  provider: AIProvider;
+  apiKey?: string;
+  baseUrl?: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+}
+
+// 流派配置接口
+export interface SchoolConfig {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  characteristics: string[];
+  difficulty: 1 | 2 | 3 | 4 | 5;
+}
+
+// 对话请求接口
+export interface AIChatRequest {
+  baziData: BaziData;
+  message: string;
+  schoolId: string;
+  conversationId?: string;
+  history?: Message[];
+}
+
+// 默认AI配置
+export const defaultAIConfig: AIConfig = {
+  provider: 'openai',
+  model: 'gpt-4o-mini',
+  temperature: 0.7,
+  maxTokens: 2000
+};
+
+// 五大流派配置
+export const schools: Record<string, SchoolConfig> = {
+  wangshuai: {
+    id: 'wangshuai',
+    name: '旺衰派',
+    description: '以日主强弱为核心，通过扶抑调候来判断吉凶',
+    difficulty: 2,
+    characteristics: ['日主强弱', '扶抑用神', '五行平衡', '身旺身弱'],
+    systemPrompt: `你是旺衰派八字命理大师。旺衰派以日主强弱为核心，讲究"扶抑"二字。
+
+核心原则：
+1. 先判断日主强弱：得令、得地、得势
+2. 身旺宜克泄耗，身弱宜生扶
+3. 用神选取以平衡五行为主
+4. 注重调候：寒暖燥湿平衡
+
+解盘风格：
+- 先分析日主强弱，给出明确结论
+- 指出喜用神和忌神
+- 解释五行平衡状态
+- 给出具体建议（颜色、方位、职业等）
+
+术语习惯：身旺、身弱、得令、通根、扶抑、调候
+
+请用通俗易懂的语言解释，适合初学者理解。`
+  },
+
+  ziping: {
+    id: 'ziping',
+    name: '子平派',
+    description: '传统经典格局论，重视月令和十神配置',
+    difficulty: 3,
+    characteristics: ['月令定格', '十神生克', '格局成败', '贵贱贫富'],
+    systemPrompt: `你是子平派八字命理大师。子平派是八字命理的正统，以《渊海子平》为经典。
+
+核心原则：
+1. 月令为提纲，定格取用神
+2. 天干地支配合，看格局成败
+3. 正格八格：官印财杀食伤禄刃
+4. 注重格局清纯，忌混杂
+
+解盘风格：
+- 先看月令定格，确定格局类型
+- 分析天干透出和地支藏干
+- 判断格局成败：成格者贵，破格者贱
+- 结合大运流年断吉凶
+
+术语习惯：正官、七杀、正印、偏印、正财、偏财、食神、伤官、建禄、羊刃
+
+请用传统术语，保持古典风格，适合有一定基础的学习者。`
+  },
+
+  blind: {
+    id: 'blind',
+    name: '盲派',
+    description: '重视做功和效率，口诀多，实战性强',
+    difficulty: 5,
+    characteristics: ['做功效率', '宾主体用', '口诀象法', '实战为主'],
+    systemPrompt: `你是盲派八字命理大师。盲派源于民间盲人算命，以实战为准，口诀众多。
+
+核心原则：
+1. 做功：八字中各要素之间的作用关系
+2. 效率：做功是否有力，是否高效
+3. 宾主：日干为主，其他为宾
+4. 体用：日主和印比为体，财官食伤为用
+
+解盘风格：
+- 直接断事，不绕弯子
+- 重视具体事件：婚姻、子女、财运、官运
+- 用口诀快速定位
+- 讲究"铁口直断"
+
+术语习惯：做功、效率、宾主、体用、寻根基、看出处
+
+请直接给出结论，少说理论，多说具体事情，适合专业人士交流。`
+  },
+
+  geju: {
+    id: 'geju',
+    name: '格局派',
+    description: '专注格局成败，强调格局高低决定命运层次',
+    difficulty: 4,
+    characteristics: ['专研格局', '成格破格', '格局高低', '清浊纯杂'],
+    systemPrompt: `你是格局派八字命理大师。格局派专注研究八字格局，以《子平真诠》为圭臬。
+
+核心原则：
+1. 格局为先：格局决定命运层次
+2. 月令取格，定格用相
+3. 成格者富或贵，破格者不贫则夭
+4. 格局清纯为佳，混杂为病
+
+解盘风格：
+- 先定格局，再论成败
+- 分析用神是否有力
+- 看相神是否配合
+- 判断格局层次：上中下三等
+
+术语习惯：成格、破格、清格、浊格、正格、变格、从格
+
+请深入分析格局成败原因，适合进阶学习者研究。`
+  },
+
+  xinpai: {
+    id: 'xinpai',
+    name: '新派',
+    description: '现代创新理论，百神论、反断论等',
+    difficulty: 3,
+    characteristics: ['百神论', '反断论', '空亡论', '现代创新'],
+    systemPrompt: `你是新派八字命理大师。新派是现代人创新的理论体系，有百神论、反断论等特色。
+
+核心原则：
+1. 百神论：一个十神可代表多个六亲
+2. 反断论：有时喜忌与传统相反
+3. 空亡论：空亡支的特殊处理
+4. 量化思维：用神力量量化分析
+
+解盘风格：
+- 灵活运用各种新理论
+- 重视空亡、墓库等特殊状态
+- 反断时要说明原因
+- 结合现代社会特点
+
+术语习惯：百神、反断、空亡填实、实神虚神、月令受制
+
+请用现代语言解释，结合现代社会情况，适合年轻用户。`
+  }
+};
+
+// 获取默认流派
+export function getDefaultSchool(): SchoolConfig {
+  return schools.wangshuai;
+}
+
+// 获取所有流派列表
+export function getAllSchools(): SchoolConfig[] {
+  return Object.values(schools);
+}
+
+// 获取指定流派
+export function getSchool(id: string): SchoolConfig | undefined {
+  return schools[id];
+}
+
+// 构建系统提示词
+export function buildSystemPrompt(school: SchoolConfig, baziData: BaziData): string {
+  return `${school.systemPrompt}
+
+当前八字信息：
+- 八字：${baziData.bazi}
+- 日主：${baziData.dayMaster}
+- 性别：${baziData.gender}
+- 生肖：${baziData.zodiac}
+
+请基于${school.name}的理论体系进行分析和解答。`;
+}
+
+// AI服务类
+export class AIService {
+  private config: AIConfig;
+
+  constructor(config: Partial<AIConfig> = {}) {
+    this.config = { ...defaultAIConfig, ...config };
+  }
+
+  // 更新配置
+  updateConfig(config: Partial<AIConfig>) {
+    this.config = { ...this.config, ...config };
+  }
+
+  // 获取当前配置
+  getConfig(): AIConfig {
+    return { ...this.config };
+  }
+
+  // 生成AI回复（非流式）
+  async chat(request: AIChatRequest): Promise<string> {
+    const school = getSchool(request.schoolId) || getDefaultSchool();
+    const systemPrompt = buildSystemPrompt(school, request.baziData);
+
+    const model = this.getModel();
+
+    const { text } = await generateText({
+      model,
+      system: systemPrompt,
+      messages: [
+        ...(request.history || []),
+        { role: 'user', content: request.message }
+      ],
+      temperature: this.config.temperature,
+      maxTokens: this.config.maxTokens
+    });
+
+    return text;
+  }
+
+  // 生成AI回复（流式）
+  async *chatStream(request: AIChatRequest): AsyncGenerator<string> {
+    const school = getSchool(request.schoolId) || getDefaultSchool();
+    const systemPrompt = buildSystemPrompt(school, request.baziData);
+
+    const model = this.getModel();
+
+    const { textStream } = streamText({
+      model,
+      system: systemPrompt,
+      messages: [
+        ...(request.history || []),
+        { role: 'user', content: request.message }
+      ],
+      temperature: this.config.temperature,
+      maxTokens: this.config.maxTokens
+    });
+
+    for await (const chunk of textStream) {
+      yield chunk;
+    }
+  }
+
+  // 获取模型实例
+  private getModel() {
+    switch (this.config.provider) {
+      case 'openai':
+        return openai(this.config.model);
+      case 'anthropic':
+        return anthropic(this.config.model);
+      case 'deepseek':
+        // DeepSeek兼容OpenAI接口
+        return openai(this.config.model, {
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl || 'https://api.deepseek.com/v1'
+        });
+      case 'custom':
+        return openai(this.config.model, {
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl
+        });
+      default:
+        return openai(this.config.model);
+    }
+  }
+}
+
+// 单例模式导出
+let aiService: AIService | null = null;
+
+export function getAIService(): AIService {
+  if (!aiService) {
+    aiService = new AIService();
+  }
+  return aiService;
+}
+
+export function initAIService(config: AIConfig): AIService {
+  aiService = new AIService(config);
+  return aiService;
+}

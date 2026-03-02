@@ -233,6 +233,63 @@
           </div>
         </div>
 
+        <!-- AI智能解盘 -->
+        <div class="card ai-card">
+          <div class="ai-header">
+            <h2>AI智能解盘</h2>
+            <div class="ai-controls">
+              <select id="school-selector" class="school-select">
+                <option value="wangshuai">旺衰派 - 入门推荐</option>
+                <option value="ziping">子平派 - 经典正统</option>
+                <option value="blind">盲派 - 实战口诀</option>
+                <option value="geju">格局派 - 格局成败</option>
+                <option value="xinpai">新派 - 现代创新</option>
+              </select>
+              <button id="ai-config-btn" class="btn-icon" title="AI配置">⚙️</button>
+            </div>
+          </div>
+
+          <div id="school-desc" class="school-desc">
+            旺衰派：以日主强弱为核心，适合初学者入门
+          </div>
+
+          <div id="ai-chat-container" class="ai-chat-container">
+            <div id="ai-messages" class="ai-messages">
+              <div class="ai-message system">
+                <div class="message-content">
+                  您好！我是AI八字解盘助手。请选择上方的命理流派，然后向我提问关于八字的问题。
+                  <br><br>
+                  您可以问我：
+                  <ul>
+                    <li>这个八字的事业怎么样？</li>
+                    <li>我的财运如何？</li>
+                    <li>这个八字适合什么职业？</li>
+                    <li>婚姻感情如何分析？</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="ai-input-area">
+              <div class="quick-questions">
+                <button class="quick-q" data-q="分析这个八字的事业发展">事业发展</button>
+                <button class="quick-q" data-q="这个八字财富运势如何">财富运势</button>
+                <button class="quick-q" data-q="分析性格特点">性格特点</button>
+                <button class="quick-q" data-q="健康状况分析">健康状况</button>
+              </div>
+              <div class="input-row">
+                <input type="text" id="ai-input" placeholder="输入您的问题..." maxlength="500">
+                <button id="ai-send-btn" class="btn-primary">
+                  <span class="send-icon">➤</span>
+                </button>
+              </div>
+              <div class="ai-disclaimer">
+                <small>AI解盘仅供参考，八字命理需要结合实际情况综合分析</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 大运 -->
         <div class="card dayun-card">
           <h2>大运</h2>
@@ -266,5 +323,58 @@
   </div>
 
   <script src="js/app.js"></script>
+  <script src="js/ai-chat.js"></script>
+
+  <!-- AI配置弹窗 -->
+  <div id="ai-config-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>AI配置</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>AI服务商</label>
+          <select id="ai-provider">
+            <option value="openai">OpenAI (GPT-4)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>API Key <small>(可选，不填使用默认配置)</small></label>
+          <input type="password" id="ai-apikey" placeholder="sk-...">
+        </div>
+
+        <div class="form-group custom-only hidden">
+          <label>自定义API地址</label>
+          <input type="text" id="ai-baseurl" placeholder="https://api.example.com/v1">
+        </div>
+
+        <div class="form-group">
+          <label>模型</label>
+          <select id="ai-model">
+            <option value="gpt-4o-mini">GPT-4o Mini (推荐)</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-3-haiku">Claude 3 Haiku</option>
+            <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+            <option value="deepseek-chat">DeepSeek Chat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>温度 (Temperature): <span id="temp-value">0.7</span></label>
+          <input type="range" id="ai-temperature" min="0" max="2" step="0.1" value="0.7">
+          <small>较低值更确定，较高值更创造性</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="ai-config-save" class="btn-primary">保存配置</button>
+        <button id="ai-config-cancel" class="btn-secondary">取消</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

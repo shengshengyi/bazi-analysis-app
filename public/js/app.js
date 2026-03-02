@@ -223,6 +223,12 @@ function displayResults() {
   // 五维分析
   displayAnalysis(analysisReport);
 
+  // 暴露数据给AI模块
+  window.appState = { baziData, analysisReport };
+  if (window.setAIBaziData) {
+    window.setAIBaziData(baziData);
+  }
+
   // 滚动到结果区域
   elements.resultSection.scrollIntoView({ behavior: 'smooth' });
 }
