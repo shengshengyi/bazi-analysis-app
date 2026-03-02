@@ -1,6 +1,6 @@
-import { generateText, streamText, type Message } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { generateText, streamText, type UIMessage } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import type { BaziData } from '../models/types.js';
 
 // AI提供商类型
@@ -13,7 +13,7 @@ export interface AIConfig {
   baseUrl?: string;
   model: string;
   temperature: number;
-  maxTokens: number;
+  maxOutputTokens: number;
 }
 
 // 提供商配置定义
@@ -42,7 +42,7 @@ export interface AIChatRequest {
   message: string;
   schoolId: string;
   conversationId?: string;
-  history?: Message[];
+  history?: any[];
 }
 
 // 默认AI配置
@@ -50,7 +50,7 @@ export const defaultAIConfig: AIConfig = {
   provider: 'openai',
   model: 'gpt-4o-mini',
   temperature: 0.7,
-  maxTokens: 2000
+  maxOutputTokens: 2000
 };
 
 // 提供商配置列表
@@ -316,7 +316,7 @@ export class AIService {
         { role: 'user', content: request.message }
       ],
       temperature: this.config.temperature,
-      maxTokens: this.config.maxTokens
+      maxOutputTokens: this.config.maxOutputTokens
     });
 
     return text;
@@ -337,7 +337,7 @@ export class AIService {
         { role: 'user', content: request.message }
       ],
       temperature: this.config.temperature,
-      maxTokens: this.config.maxTokens
+      maxOutputTokens: this.config.maxOutputTokens
     });
 
     for await (const chunk of textStream) {
@@ -347,38 +347,51 @@ export class AIService {
 
   // 获取模型实例
   private getModel() {
-    const baseConfig: any = {};
-    if (this.config.apiKey) {
-      baseConfig.apiKey = this.config.apiKey;
-    }
-    if (this.config.baseUrl) {
-      baseConfig.baseURL = this.config.baseUrl;
-    }
-
     switch (this.config.provider) {
-      case 'openai':
-        return openai(this.config.model, baseConfig);
-      case 'anthropic':
-        return anthropic(this.config.model, baseConfig);
-      case 'deepseek':
-        // DeepSeek兼容OpenAI接口
-        return openai(this.config.model, {
-          ...baseConfig,
-          baseURL: this.config.baseUrl || 'https://api.deepseek.com/v1'
-        });
-      case 'qwen':
-        // 千问百炼兼容OpenAI接口
-        return openai(this.config.model, {
-          ...baseConfig,
-          baseURL: this.config.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-        });
-      case 'custom':
-        return openai(this.config.model, {
-          ...baseConfig,
+      case 'openai': {
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
           baseURL: this.config.baseUrl
         });
-      default:
-        return openai(this.config.model, baseConfig);
+        return openai(this.config.model);
+      }
+      case 'anthropic': {
+        const anthropic = createAnthropic({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl
+        });
+        return anthropic(this.config.model);
+      }
+      case 'deepseek': {
+        // DeepSeek兼容OpenAI接口
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl || 'https://api.deepseek.com/v1'
+        });
+        return openai(this.config.model);
+      }
+      case 'qwen': {
+        // 千问百炼兼容OpenAI接口
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+        });
+        return openai(this.config.model);
+      }
+      case 'custom': {
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl
+        });
+        return openai(this.config.model);
+      }
+      default: {
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl
+        });
+        return openai(this.config.model);
+      }
     }
   }
 }

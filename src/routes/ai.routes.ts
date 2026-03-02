@@ -126,7 +126,7 @@ router.get('/config', (req, res) => {
       provider: config.provider,
       model: config.model,
       temperature: config.temperature,
-      maxTokens: config.maxTokens,
+      maxOutputTokens: config.maxOutputTokens,
       hasApiKey: !!config.apiKey
     };
 
@@ -149,7 +149,7 @@ router.get('/config', (req, res) => {
  */
 router.post('/config', (req, res) => {
   try {
-    const { provider, apiKey, baseUrl, model, temperature, maxTokens } = req.body;
+    const { provider, apiKey, baseUrl, model, temperature, maxOutputTokens } = req.body;
 
     const config: Partial<AIConfig> = {};
     if (provider) config.provider = provider;
@@ -157,7 +157,7 @@ router.post('/config', (req, res) => {
     if (baseUrl) config.baseUrl = baseUrl;
     if (model) config.model = model;
     if (temperature !== undefined) config.temperature = temperature;
-    if (maxTokens) config.maxTokens = maxTokens;
+    if (maxOutputTokens) config.maxOutputTokens = maxOutputTokens;
 
     // 如果有API Key则重新初始化，否则更新现有配置
     if (apiKey) {
@@ -167,7 +167,7 @@ router.post('/config', (req, res) => {
         baseUrl: config.baseUrl,
         model: config.model || 'gpt-4o-mini',
         temperature: config.temperature ?? 0.7,
-        maxTokens: config.maxTokens || 2000
+        maxOutputTokens: config.maxOutputTokens || 2000
       });
     } else {
       const aiService = getAIService();

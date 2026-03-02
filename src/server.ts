@@ -35,9 +35,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`
+// 启动服务器（仅在非 Vercel 环境中）
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`
 ╔════════════════════════════════════════╗
 ║     八字分析应用服务器已启动            ║
 ╠════════════════════════════════════════╣
@@ -45,6 +46,7 @@ app.listen(PORT, () => {
 ║  API文档: http://localhost:${PORT}/api   ║
 ╚════════════════════════════════════════╝
   `);
-});
+  });
+}
 
 export default app;
