@@ -63,27 +63,32 @@ const aiState = {
   baziData: null
 };
 
-// DOM 元素
-const aiElements = {
-  schoolSelector: document.getElementById('school-selector'),
-  schoolDesc: document.getElementById('school-desc'),
-  messagesContainer: document.getElementById('ai-messages'),
-  input: document.getElementById('ai-input'),
-  sendBtn: document.getElementById('ai-send-btn'),
-  quickQuestions: document.querySelectorAll('.quick-q'),
-  configBtn: document.getElementById('ai-config-btn'),
-  configModal: document.getElementById('ai-config-modal'),
-  configSave: document.getElementById('ai-config-save'),
-  configCancel: document.getElementById('ai-config-cancel'),
-  modalClose: document.querySelector('.modal-close'),
-  provider: document.getElementById('ai-provider'),
-  apiKey: document.getElementById('ai-apikey'),
-  apiKeyHelp: document.getElementById('apikey-help'),
-  baseUrl: document.getElementById('ai-baseurl'),
-  model: document.getElementById('ai-model'),
-  temperature: document.getElementById('ai-temperature'),
-  tempValue: document.getElementById('temp-value')
-};
+// DOM 元素（延迟初始化）
+let aiElements = {};
+
+// 初始化DOM元素
+function initElements() {
+  aiElements = {
+    schoolSelector: document.getElementById('school-selector'),
+    schoolDesc: document.getElementById('school-desc'),
+    messagesContainer: document.getElementById('ai-messages'),
+    input: document.getElementById('ai-input'),
+    sendBtn: document.getElementById('ai-send-btn'),
+    quickQuestions: document.querySelectorAll('.quick-q'),
+    configBtn: document.getElementById('ai-config-btn'),
+    configModal: document.getElementById('ai-config-modal'),
+    configSave: document.getElementById('ai-config-save'),
+    configCancel: document.getElementById('ai-config-cancel'),
+    modalClose: document.querySelector('.modal-close'),
+    provider: document.getElementById('ai-provider'),
+    apiKey: document.getElementById('ai-apikey'),
+    apiKeyHelp: document.getElementById('apikey-help'),
+    baseUrl: document.getElementById('ai-baseurl'),
+    model: document.getElementById('ai-model'),
+    temperature: document.getElementById('ai-temperature'),
+    tempValue: document.getElementById('temp-value')
+  };
+}
 
 // 流派描述
 const schoolDescriptions = {
@@ -96,6 +101,7 @@ const schoolDescriptions = {
 
 // 初始化AI功能
 function initAIFeature() {
+  initElements(); // 先初始化DOM元素
   bindAIEvents();
   updateModelOptions('openai');
   console.log('AI解盘功能已初始化');
@@ -170,6 +176,26 @@ function bindAIEvents() {
       });
     });
   }
+
+  // 模型选择 - 处理自定义模型
+  if (aiElements.model) {
+    aiElements.model.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        const customModel = prompt('请输入模型名称：');
+        if (customModel && customModel.trim()) {
+          // 添加自定义选项并选中
+          const option = document.createElement('option');
+          option.value = customModel.trim();
+          option.textContent = customModel.trim() + ' (自定义)';
+          option.selected = true;
+          aiElements.model.insertBefore(option, aiElements.model.lastElementChild);
+        } else {
+          // 用户取消，恢复默认值
+          e.target.value = e.target.options[0].value;
+        }
+      }
+    });
+  }
 }
 
 // 更新模型选项
@@ -179,9 +205,15 @@ function updateModelOptions(provider) {
   const config = providerModels[provider];
   if (!config) return;
 
-  aiElements.model.innerHTML = config.models.map(m =>
+  // 生成模型选项
+  let optionsHtml = config.models.map(m =>
     `<option value="${m.id}">${m.name} - ${m.desc}</option>`
   ).join('');
+
+  // 添加自定义选项
+  optionsHtml += `<option value="custom">➕ 自定义模型...</option>`;
+
+  aiElements.model.innerHTML = optionsHtml;
 }
 
 // 更新API Key帮助文本
@@ -372,13 +404,31 @@ async function loadAIConfig() {
 
 // 保存AI配置
 async function saveAIConfig() {
+  const provider = aiElements.provider.value;
+  const modelValue = aiElements.model.value;
+
+  // 处理自定义模型名称
+  let model = modelValue;
+  if (modelValue === 'custom') {
+    const customModelName = prompt('请输入模型名称：');
+    if (!customModelName) return; // 用户取消
+    model = customModelName.trim();
+  }
+
+  // 构建配置对象
   const config = {
-    provider: aiElements.provider.value,
+    provider: provider,
     apiKey: aiElements.apiKey.value || undefined,
-    baseUrl: aiElements.baseUrl?.value || undefined,
-    model: aiElements.model.value,
+    model: model,
     temperature: parseFloat(aiElements.temperature.value)
   };
+
+  // 只有在自定义模式下才添加baseUrl
+  if (provider === 'custom' && aiElements.baseUrl && aiElements.baseUrl.value) {
+    config.baseUrl = aiElements.baseUrl.value;
+  }
+
+  console.log('保存配置:', config);
 
   try {
     const response = await fetch('/api/ai/config', {
@@ -389,14 +439,14 @@ async function saveAIConfig() {
 
     const result = await response.json();
     if (result.success) {
-      addSystemMessage('AI配置已更新：' + providerModels[config.provider].name);
+      addSystemMessage('AI配置已更新：' + providerModels[config.provider].name + '，模型：' + config.model);
       closeConfigModal();
     } else {
       alert('配置保存失败：' + result.error);
     }
   } catch (error) {
     console.error('保存配置失败:', error);
-    alert('保存配置失败');
+    alert('保存配置失败：' + error.message);
   }
 }
 
