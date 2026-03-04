@@ -4,7 +4,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import type { BaziData } from '../models/types.js';
 
 // AI提供商类型
-export type AIProvider = 'openai' | 'anthropic' | 'deepseek' | 'qwen' | 'custom';
+export type AIProvider = 'openai' | 'anthropic' | 'deepseek' | 'qwen' | 'qwen-coding' | 'custom';
 
 // AI配置接口
 export interface AIConfig {
@@ -95,15 +95,35 @@ export const providers: Record<AIProvider, ProviderConfig> = {
   qwen: {
     id: 'qwen',
     name: '通义千问',
-    description: '阿里云通义千问大模型',
+    description: '阿里云通义千问大模型 - 千问百炼标准版',
     defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     requireApiKey: true,
     models: [
+      // 千问3系列
+      { id: 'qwen3-max', name: 'Qwen3 Max', description: '千问3最强模型' },
+      { id: 'qwen3.5-plus', name: 'Qwen3.5 Plus', description: '千问3.5增强版' },
+      { id: 'qwen3-coder-next', name: 'Qwen3 Coder Next', description: '千问3编程下一代' },
+      { id: 'qwen3-coder-plus', name: 'Qwen3 Coder Plus', description: '千问3编程增强版' },
+      // 经典系列
       { id: 'qwen-max', name: 'Qwen Max', description: '通义千问最强模型' },
       { id: 'qwen-plus', name: 'Qwen Plus', description: '均衡性能与速度' },
       { id: 'qwen-turbo', name: 'Qwen Turbo', description: '快速响应' },
       { id: 'qwen-coder-plus', name: 'Qwen Coder Plus', description: '编程专用' },
       { id: 'qwen-coder-turbo', name: 'Qwen Coder Turbo', description: '快速编程助手' }
+    ]
+  },
+  'qwen-coding': {
+    id: 'qwen-coding',
+    name: '通义千问 - Coding Plane',
+    description: '阿里云千问百炼Coding Plane套餐（OpenAI兼容接口）',
+    defaultBaseUrl: 'https://coding.dashscope.aliyuncs.com/v1',
+    requireApiKey: true,
+    models: [
+      // 千问3系列（Coding Plane支持）
+      { id: 'qwen3.5-plus', name: 'Qwen3.5-Plus', description: '文本生成、深度思考、视觉理解（推荐）' },
+      { id: 'qwen3-max-2026-01-23', name: 'Qwen3-Max', description: '文本生成、深度思考' },
+      { id: 'qwen3-coder-next', name: 'Qwen3-Coder-Next', description: '文本生成' },
+      { id: 'qwen3-coder-plus', name: 'Qwen3-Coder-Plus', description: '文本生成' }
     ]
   },
   custom: {
@@ -306,20 +326,40 @@ export class AIService {
     const school = getSchool(request.schoolId) || getDefaultSchool();
     const systemPrompt = buildSystemPrompt(school, request.baziData);
 
-    const model = this.getModel();
-
-    const { text } = await generateText({
-      model,
-      system: systemPrompt,
-      messages: [
-        ...(request.history || []),
-        { role: 'user', content: request.message }
-      ],
-      temperature: this.config.temperature,
-      maxOutputTokens: this.config.maxOutputTokens
+    // 调试日志 - 在获取model之前
+    console.log('[AI Service] Current config:', {
+      provider: this.config.provider,
+      model: this.config.model,
+      baseUrl: this.config.baseUrl,
+      hasApiKey: !!this.config.apiKey
     });
 
-    return text;
+    const model = this.getModel();
+
+    // 调试日志 - 获取model之后
+    console.log('[AI Service] Model instance created');
+
+    try {
+      const { text } = await generateText({
+        model,
+        system: systemPrompt,
+        messages: [
+          ...(request.history || []),
+          { role: 'user', content: request.message }
+        ],
+        temperature: this.config.temperature,
+        maxOutputTokens: this.config.maxOutputTokens
+      });
+
+      return text;
+    } catch (error: any) {
+      console.error('[AI Service] Error details:', error);
+      // 提供更详细的错误信息
+      if (error.message?.includes('Not Found')) {
+        throw new Error(`模型 "${this.config.model}" 未找到。请检查：1) 模型名称是否正确；2) 您的API套餐是否支持该模型；3) Base URL是否正确配置。当前配置: provider=${this.config.provider}, baseUrl=${this.config.baseUrl}。错误详情: ${error.message}`);
+      }
+      throw error;
+    }
   }
 
   // 生成AI回复（流式）
@@ -377,6 +417,15 @@ export class AIService {
           baseURL: this.config.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1'
         });
         return openai(this.config.model);
+      }
+      case 'qwen-coding': {
+        // 千问百炼Coding Plane套餐 - 使用OpenAI标准适配器的chat方法
+        // 显式使用 .chat() 方法确保使用 Chat Completions API，而不是 Responses API
+        const openai = createOpenAI({
+          apiKey: this.config.apiKey,
+          baseURL: this.config.baseUrl || 'https://coding.dashscope.aliyuncs.com/v1'
+        });
+        return openai.chat(this.config.model);
       }
       case 'custom': {
         const openai = createOpenAI({

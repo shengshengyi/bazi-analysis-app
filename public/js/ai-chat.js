@@ -45,6 +45,18 @@ const providerModels = {
       { id: 'qwen-coder-turbo', name: 'Qwen Coder Turbo', desc: '快速编程助手' }
     ]
   },
+  'qwen-coding': {
+    name: '通义千问 - Coding Plane',
+    apiKeyPlaceholder: 'sk-sp-...',
+    apiKeyHelp: '千问百炼Coding Plane API Key（以sk-sp-开头）',
+    models: [
+      // 千问3系列（Coding Plane支持）
+      { id: 'qwen3.5-plus', name: 'Qwen3.5-Plus', desc: '文本生成、深度思考、视觉理解（推荐）' },
+      { id: 'qwen3-max-2026-01-23', name: 'Qwen3-Max', desc: '文本生成、深度思考' },
+      { id: 'qwen3-coder-next', name: 'Qwen3-Coder-Next', desc: '文本生成' },
+      { id: 'qwen3-coder-plus', name: 'Qwen3-Coder-Plus', desc: '文本生成' }
+    ]
+  },
   custom: {
     name: '自定义',
     apiKeyPlaceholder: 'your-api-key',
@@ -169,10 +181,11 @@ function bindAIEvents() {
       updateModelOptions(provider);
       updateApiKeyHelp(provider);
 
-      // 显示/隐藏自定义URL输入
-      const customOnly = document.querySelectorAll('.custom-only');
-      customOnly.forEach(el => {
-        el.classList.toggle('hidden', provider !== 'custom');
+      // 显示/隐藏自定义URL输入 (custom 和 qwen-coding 支持自定义baseUrl)
+      const baseurlElements = document.querySelectorAll('.baseurl-config');
+      const showBaseUrl = provider === 'custom' || provider === 'qwen-coding';
+      baseurlElements.forEach(el => {
+        el.classList.toggle('hidden', !showBaseUrl);
       });
     });
   }
@@ -384,6 +397,7 @@ async function loadAIConfig() {
   try {
     const response = await fetch('/api/ai/config');
     const result = await response.json();
+    console.log('[AI Config] Loaded from server:', result);
     if (result.success) {
       const config = result.data;
       if (aiElements.provider) {
@@ -395,6 +409,11 @@ async function loadAIConfig() {
       if (aiElements.temperature) {
         aiElements.temperature.value = config.temperature;
         aiElements.tempValue.textContent = config.temperature;
+      }
+      // 加载baseUrl（如果存在）
+      if (aiElements.baseUrl && config.baseUrl) {
+        aiElements.baseUrl.value = config.baseUrl;
+        console.log('[AI Config] Base URL loaded:', config.baseUrl);
       }
     }
   } catch (error) {
@@ -423,12 +442,17 @@ async function saveAIConfig() {
     temperature: parseFloat(aiElements.temperature.value)
   };
 
-  // 只有在自定义模式下才添加baseUrl
-  if (provider === 'custom' && aiElements.baseUrl && aiElements.baseUrl.value) {
-    config.baseUrl = aiElements.baseUrl.value;
+  // 允许自定义baseUrl的情况：custom模式或qwen-coding
+  if (provider === 'custom' || provider === 'qwen-coding') {
+    if (aiElements.baseUrl && aiElements.baseUrl.value) {
+      config.baseUrl = aiElements.baseUrl.value;
+    } else if (provider === 'qwen-coding') {
+      // 使用Coding Plane默认地址
+      config.baseUrl = 'https://coding.dashscope.aliyuncs.com/v1';
+    }
   }
 
-  console.log('保存配置:', config);
+  console.log('[AI Config] Sending to server:', JSON.stringify(config, null, 2));
 
   try {
     const response = await fetch('/api/ai/config', {
@@ -438,6 +462,8 @@ async function saveAIConfig() {
     });
 
     const result = await response.json();
+    console.log('[AI Config] Server response:', result);
+
     if (result.success) {
       addSystemMessage('AI配置已更新：' + providerModels[config.provider].name + '，模型：' + config.model);
       closeConfigModal();

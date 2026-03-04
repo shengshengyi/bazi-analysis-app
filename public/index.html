@@ -339,7 +339,8 @@
             <option value="openai">OpenAI (GPT-4)</option>
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="deepseek">DeepSeek</option>
-            <option value="qwen">通义千问 (千问百炼)</option>
+            <option value="qwen">通义千问 (千问百炼标准版)</option>
+            <option value="qwen-coding">通义千问 (Coding Plane)</option>
             <option value="custom">自定义</option>
           </select>
         </div>
@@ -350,9 +351,10 @@
           <small id="apikey-help" class="help-text">OpenAI API Key 格式: sk-...</small>
         </div>
 
-        <div class="form-group custom-only hidden">
-          <label>自定义API地址</label>
+        <div class="form-group baseurl-config hidden">
+          <label>API地址 <small>(可选，用于自定义或Coding Plane)</small></label>
           <input type="text" id="ai-baseurl" placeholder="https://api.example.com/v1">
+          <small class="help-text">Coding Plane默认: https://coding.dashscope.aliyuncs.com/v1</small>
         </div>
 
         <div class="form-group">

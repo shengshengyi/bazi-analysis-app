@@ -121,10 +121,11 @@ router.get('/config', (req, res) => {
     const aiService = getAIService();
     const config = aiService.getConfig();
 
-    // 不返回API Key
+    // 不返回API Key，但返回baseUrl以便前端显示
     const safeConfig = {
       provider: config.provider,
       model: config.model,
+      baseUrl: config.baseUrl,
       temperature: config.temperature,
       maxOutputTokens: config.maxOutputTokens,
       hasApiKey: !!config.apiKey
@@ -151,27 +152,78 @@ router.post('/config', (req, res) => {
   try {
     const { provider, apiKey, baseUrl, model, temperature, maxOutputTokens } = req.body;
 
+    console.log('[AI Config] Received:', { provider, baseUrl, model, hasApiKey: !!apiKey });
+
     const config: Partial<AIConfig> = {};
     if (provider) config.provider = provider;
     if (apiKey) config.apiKey = apiKey;
-    if (baseUrl) config.baseUrl = baseUrl;
+
+    // 设置baseUrl：优先使用用户提供的，否则根据provider使用默认值
+    if (baseUrl) {
+      config.baseUrl = baseUrl;
+    } else if (provider === 'qwen-coding') {
+      config.baseUrl = 'https://coding.dashscope.aliyuncs.com/v1';
+    } else if (provider === 'qwen') {
+      config.baseUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    } else if (provider === 'deepseek') {
+      config.baseUrl = 'https://api.deepseek.com/v1';
+    }
+
     if (model) config.model = model;
     if (temperature !== undefined) config.temperature = temperature;
     if (maxOutputTokens) config.maxOutputTokens = maxOutputTokens;
 
+    console.log('[AI Config] Processed:', config);
+
     // 如果有API Key则重新初始化，否则更新现有配置
     if (apiKey) {
+      console.log('[AI Config] Initializing with new API key:', {
+        provider: config.provider,
+        baseUrl: config.baseUrl,
+        model: config.model
+      });
+
+      // 根据provider设置默认模型
+      const defaultModel = provider === 'qwen-coding' ? 'qwen3.5-plus' : 'gpt-4o-mini';
+
       initAIService({
         provider: config.provider || 'openai',
         apiKey,
         baseUrl: config.baseUrl,
-        model: config.model || 'gpt-4o-mini',
+        model: config.model || defaultModel,
         temperature: config.temperature ?? 0.7,
         maxOutputTokens: config.maxOutputTokens || 2000
       });
     } else {
+      // 即使没有API Key，如果有其他配置变更也应该更新
+      // 获取当前服务状态，如果已初始化则更新，否则需要警告用户
       const aiService = getAIService();
-      aiService.updateConfig(config);
+      const currentConfig = aiService.getConfig();
+
+      console.log('[AI Config] Updating existing config:', {
+        currentProvider: currentConfig.provider,
+        newProvider: config.provider,
+        currentBaseUrl: currentConfig.baseUrl,
+        newBaseUrl: config.baseUrl,
+        currentModel: currentConfig.model,
+        newModel: config.model
+      });
+
+      // 如果提供了完整的配置信息（provider, baseUrl, model），即使没API Key也重新初始化
+      // 这样可以支持切换不同的服务端点而无需重复输入API Key
+      if (config.provider && config.baseUrl && config.model && currentConfig.apiKey) {
+        console.log('[AI Config] Re-initializing with existing API key and new config');
+        initAIService({
+          provider: config.provider,
+          apiKey: currentConfig.apiKey, // 使用现有的API Key
+          baseUrl: config.baseUrl,
+          model: config.model,
+          temperature: config.temperature ?? currentConfig.temperature,
+          maxOutputTokens: config.maxOutputTokens || currentConfig.maxOutputTokens
+        });
+      } else {
+        aiService.updateConfig(config);
+      }
     }
 
     res.json({
