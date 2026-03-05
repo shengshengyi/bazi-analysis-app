@@ -111,13 +111,15 @@ export interface BaziData {
 
 // 排盘请求
 export interface BaziRequest {
-  inputType: 'solar' | 'lunar';
+  inputType: 'solar' | 'lunar' | 'bazi';
   solarDate?: string;
   solarTime?: string;
   lunarYear?: number;
   lunarMonth?: number;
   lunarDay?: number;
   lunarHour?: number;
+  lunarMinute?: string;  // 具体分钟，格式 "HH:mm"
+  baziString?: string;   // 八字直接输入
   isLeapMonth?: boolean;
   gender: 'male' | 'female';
   timezone?: string;

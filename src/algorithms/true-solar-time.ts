@@ -64,11 +64,13 @@ export function parseLunarDate(
   month: number,
   day: number,
   hour: number,
-  isLeap: boolean = false
+  isLeap: boolean = false,
+  minute: string = '00:00'
 ): string {
   // 格式: YYYY-MM-DD HH:mm:ss
   const hourStr = hour.toString().padStart(2, '0');
-  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hourStr}:00:00`;
+  const minuteStr = minute || '00:00';
+  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hourStr}:${minuteStr}:00`;
 }
 
 /**
@@ -101,17 +103,20 @@ export function processDateTime(request: BaziRequest): {
     }
 
     return { solarDatetime: dateTime };
-  } else {
+  } else if (request.inputType === 'lunar') {
     // 农历输入
     const lunarDatetime = parseLunarDate(
       request.lunarYear!,
       request.lunarMonth!,
       request.lunarDay!,
       request.lunarHour!,
-      request.isLeapMonth
+      request.isLeapMonth,
+      request.lunarMinute
     );
     return { lunarDatetime };
   }
+  
+  return {};
 }
 
 /**

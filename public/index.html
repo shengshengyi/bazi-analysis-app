@@ -3,296 +3,749 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>八字分析应用 - 参天AI</title>
+  <title>八字分析结果 - 参天AI</title>
+  <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* 八字结果展示样式 */
+    .bazi-result {
+      padding: 20px 0;
+    }
+    .bazi-info {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f9f5f0;
+      border-radius: 8px;
+    }
+    .info-row {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .info-row .label {
+      color: #666;
+      font-weight: 500;
+    }
+    .info-row .value {
+      color: #333;
+    }
+    .info-row .highlight {
+      color: #8B4513;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .bazi-table {
+      display: grid;
+      grid-template-columns: 80px repeat(4, 1fr);
+      gap: 8px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .bazi-table .table-row {
+      display: contents;
+    }
+    .bazi-table .cell {
+      padding: 12px 8px;
+      border: 1px solid #e0d5c7;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      font-size: 1.1rem;
+    }
+    .bazi-table .header .cell {
+      background: #8B4513;
+      color: white;
+      font-weight: bold;
+    }
+    .bazi-table .cell.label {
+      background: #f5f0e8;
+      font-weight: 500;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .bazi-table .stem {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .bazi-table .branch {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .bazi-table .day-master {
+      background: linear-gradient(135deg, #FFE4B5 0%, #FFD699 100%);
+    }
+    .hidden-stems-row .cell {
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    /* 维度卡片样式 */
+    .dimensions-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .dimension-card {
+      background: #f9f5f0;
+      padding: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .dimension-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .dimension-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .dimension-icon {
+      font-size: 1.5rem;
+    }
+    .dimension-name {
+      font-weight: 500;
+      flex: 1;
+    }
+    .dimension-score {
+      color: #8B4513;
+      font-weight: bold;
+    }
+    .keyword {
+      display: inline-block;
+      background: #8B4513;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-right: 4px;
+    }
+    /* 大运表格样式 */
+    .dayun-info {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f9f5f0;
+      border-radius: 8px;
+    }
+    .dayun-info p {
+      margin: 4px 0;
+    }
+    .dayun-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .dayun-table th,
+    .dayun-table td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #e0d5c7;
+    }
+    .dayun-table th {
+      background: #8B4513;
+      color: white;
+    }
+    .dayun-table tr:nth-child(even) {
+      background: #f9f5f0;
+    }
+    /* 神煞样式 */
+    .shensha-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .shensha-pillar-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e0d5c7;
+    }
+    .shensha-pillar-group:last-child {
+      border-bottom: none;
+    }
+    .shensha-pillar-label {
+      min-width: 50px;
+      font-weight: bold;
+      color: #8B4513;
+      font-size: 0.9rem;
+      padding-top: 4px;
+    }
+    .shensha-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+    }
+    .shensha-tag {
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .shensha-tag:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    /* 纳音样式 */
+    .nayin-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .nayin-tag {
+      background: #f9f5f0;
+      border: 1px solid #e0d5c7;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    /* 命宫身宫样式 */
+    .palace-info {
+      background: #f9f5f0;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .palace-info p {
+      margin: 8px 0;
+      font-size: 1.1rem;
+    }
+    /* AI悬浮按钮样式 */
+    .ai-float-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(139, 69, 19, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      font-weight: bold;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .ai-float-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5);
+    }
+    .ai-float-btn .ai-icon {
+      font-size: 1.3rem;
+    }
+    .ai-panel {
+      position: fixed;
+      right: 20px;
+      bottom: 90px;
+      width: 420px;
+      height: 550px;
+      min-width: 300px;
+      min-height: 400px;
+      max-width: 800px;
+      max-height: 90vh;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+      resize: both;
+    }
+    .ai-panel::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: se-resize;
+      background: linear-gradient(135deg, transparent 50%, rgba(139,69,19,0.3) 50%);
+      border-bottom-right-radius: 16px;
+    }
+    .ai-panel-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .ai-panel-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow: hidden;
+    }
+    .ai-messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      padding-right: 8px;
+    }
+    .ai-message {
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.5;
+    }
+    .ai-message.system {
+      background: #f0f0f0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .ai-message.user {
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      margin-left: auto;
+    }
+    .ai-message.ai {
+      background: #f9f5f0;
+      color: #333;
+      border: 1px solid #e0d5c7;
+    }
+    .ai-quick-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ai-quick-questions button {
+      padding: 6px 12px;
+      background: #f9f5f0;
+      border: 1px solid #e0d5c7;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .ai-quick-questions button:hover {
+      background: #8B4513;
+      color: white;
+      border-color: #8B4513;
+    }
+    .ai-input-area {
+      display: flex;
+      gap: 8px;
+    }
+    .ai-input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e0d5c7;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+    .ai-input-area input:focus {
+      outline: none;
+      border-color: #8B4513;
+    }
+    .ai-input-area button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+    .ai-input-area button:hover {
+      opacity: 0.9;
+    }
+    .ai-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    .ai-close:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    /* 建议列表样式 */
+    #advice-list {
+      list-style: none;
+      padding: 0;
+    }
+    #advice-list li {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: #f9f5f0;
+      border-radius: 8px;
+      border-left: 4px solid #8B4513;
+    }
+    /* 图表容器 */
+    .chart-container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    /* 可点击的卡片标题 */
+    .card-title-clickable {
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title-clickable:hover {
+      color: #D2691E;
+    }
+    .card-title-clickable::after {
+      content: '↗';
+      font-size: 0.8em;
+      opacity: 0.5;
+    }
+    .card-title-clickable:hover::after {
+      opacity: 1;
+    }
+    /* 弹窗详情内容样式 */
+    .modal-detail-content {
+      padding: 16px 0;
+    }
+    .modal-detail-content h4 {
+      color: #8B4513;
+      margin: 16px 0 8px;
+      font-size: 1rem;
+    }
+    .modal-detail-content h4:first-child {
+      margin-top: 0;
+    }
+    .modal-detail-content p {
+      line-height: 1.6;
+      color: #333;
+    }
+    .modal-detail-content ul {
+      padding-left: 20px;
+    }
+    .modal-detail-content li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .detail-tag {
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+    }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .detail-table th,
+    .detail-table td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #e0d5c7;
+    }
+    .detail-table th {
+      background: #f5f0e8;
+      color: #8B4513;
+    }
+    .detail-item {
+      margin-bottom: 16px;
+    }
+    /* 维度分析弹窗样式 */
+    .dimension-analysis {
+      padding: 8px 0;
+    }
+    .dimension-score-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0d5c7;
+    }
+    .dimension-score-large {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .dimension-level {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    .dimension-text {
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #f9f5f0;
+      border-radius: 8px;
+    }
+    .dimension-section {
+      margin-bottom: 16px;
+    }
+    .dimension-section h4 {
+      color: #8B4513;
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+    .dimension-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .dimension-tag {
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+    }
+    .dimension-list {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .dimension-list li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: #333;
+    }
+    .dimension-list.challenge li {
+      color: #F44336;
+    }
+    .modal-loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    /* AI悬浮窗样式增强 */
+    .ai-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .ai-config-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .ai-config-btn:hover {
+      opacity: 1;
+    }
+    /* AI配置弹窗 */
+    .ai-config-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .ai-config-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .ai-config-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0d5c7;
+    }
+    .ai-config-header h3 {
+      margin: 0;
+      color: #8B4513;
+    }
+    .ai-config-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+    .ai-config-body {
+      padding: 20px;
+    }
+    .config-group {
+      margin-bottom: 16px;
+    }
+    .config-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+    .config-group select,
+    .config-group input[type="text"],
+    .config-group input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e0d5c7;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .config-group input[type="range"] {
+      width: 100%;
+    }
+    .api-help {
+      display: block;
+      margin-top: 4px;
+      color: #666;
+      font-size: 0.8rem;
+    }
+    .ai-config-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0d5c7;
+      text-align: right;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-save:hover {
+      opacity: 0.9;
+    }
+    .btn-delete {
+      background: #F44336;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    .btn-delete:hover {
+      background: #d32f2f;
+    }
+    .btn-add-school {
+      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      color: white;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .btn-add-school:hover {
+      opacity: 0.9;
+      transform: scale(1.1);
+    }
+    .ai-school-selector {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-bottom: 1px solid #e0d5c7;
+    }
+    .ai-school-selector select {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #e0d5c7;
+      border-radius: 4px;
+      background: white;
+      font-size: 0.9rem;
+    }
+    .config-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e0d5c7;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      resize: vertical;
+      font-family: inherit;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <header class="header">
-      <h1>八字分析应用</h1>
-      <p class="subtitle">基于参天AI - 精准排盘 · 五维分析</p>
+      <div class="header-content">
+        <h1>八字排盘结果</h1>
+        <div class="header-actions">
+          <button id="back-btn" class="btn-secondary">← 返回重新输入</button>
+        </div>
+      </div>
     </header>
 
     <main class="main">
-      <!-- 输入区域 -->
-      <section class="input-section">
-        <div class="card">
-          <h2>排盘信息</h2>
-
-          <div class="input-type-toggle">
-            <button class="toggle-btn active" data-type="solar">公历</button>
-            <button class="toggle-btn" data-type="lunar">农历</button>
-          </div>
-
-          <!-- 公历输入 -->
-          <div id="solar-input" class="input-group">
-            <div class="form-row">
-              <div class="form-field">
-                <label>出生日期</label>
-                <input type="date" id="solar-date" value="1998-07-31">
-              </div>
-              <div class="form-field">
-                <label>出生时间</label>
-                <input type="time" id="solar-time" value="14:10">
-              </div>
-            </div>
-          </div>
-
-          <!-- 农历输入 -->
-          <div id="lunar-input" class="input-group hidden">
-            <div class="form-row">
-              <div class="form-field">
-                <label>年</label>
-                <input type="number" id="lunar-year" value="1998" min="1900" max="2100">
-              </div>
-              <div class="form-field">
-                <label>月</label>
-                <input type="number" id="lunar-month" value="6" min="1" max="12">
-              </div>
-              <div class="form-field">
-                <label>日</label>
-                <input type="number" id="lunar-day" value="9" min="1" max="30">
-              </div>
-              <div class="form-field">
-                <label>时</label>
-                <select id="lunar-hour">
-                  <option value="0">子时(23-1)</option>
-                  <option value="2">丑时(1-3)</option>
-                  <option value="4">寅时(3-5)</option>
-                  <option value="6">卯时(5-7)</option>
-                  <option value="8">辰时(7-9)</option>
-                  <option value="10">巳时(9-11)</option>
-                  <option value="12">午时(11-13)</option>
-                  <option value="14" selected>未时(13-15)</option>
-                  <option value="16">申时(15-17)</option>
-                  <option value="18">酉时(17-19)</option>
-                  <option value="20">戌时(19-21)</option>
-                  <option value="22">亥时(21-23)</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <label class="checkbox-label">
-                <input type="checkbox" id="lunar-leap">
-                <span>闰月</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- 通用设置 -->
-          <div class="form-row">
-            <div class="form-field">
-              <label>性别</label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input type="radio" name="gender" value="male" checked>
-                  <span>男</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="gender" value="female">
-                  <span>女</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- 真太阳时 -->
-          <div class="form-row">
-            <label class="checkbox-label">
-              <input type="checkbox" id="use-true-solar">
-              <span>使用真太阳时校正</span>
-            </label>
-          </div>
-
-          <div id="longitude-input" class="form-row hidden">
-            <div class="form-field">
-              <label>出生地经度（用于真太阳时校正）</label>
-              <input type="number" id="longitude" value="116.4074" step="0.0001" placeholder="例如: 116.4074 (北京)">
-              <small>东经为正，西经为负。北京约116.4，上海约121.5，广州约113.3</small>
-            </div>
-          </div>
-
-          <!-- 分析维度选择 -->
-          <div class="analysis-dims">
-            <label>分析维度</label>
-            <div class="checkbox-group">
-              <label class="checkbox-label">
-                <input type="checkbox" class="dim-checkbox" value="career" checked>
-                <span>职业</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" class="dim-checkbox" value="wealth" checked>
-                <span>财富</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" class="dim-checkbox" value="fortune" checked>
-                <span>运势</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" class="dim-checkbox" value="personality" checked>
-                <span>性格</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" class="dim-checkbox" value="health" checked>
-                <span>健康</span>
-              </label>
-            </div>
-          </div>
-
-          <button id="analyze-btn" class="btn-primary">
-            <span class="btn-text">开始分析</span>
-            <span class="btn-loading hidden">分析中...</span>
-          </button>
-        </div>
-      </section>
-
       <!-- 结果区域 -->
-      <section id="result-section" class="result-section hidden">
+      <section id="result-section" class="result-section">
         <!-- 排盘结果 -->
         <div class="card bazi-card">
-          <h2>八字排盘</h2>
-          <div class="bazi-info">
-            <div class="info-row">
-              <span class="label">性别:</span>
-              <span id="result-gender">-</span>
-            </div>
-            <div class="info-row">
-              <span class="label">阳历:</span>
-              <span id="result-solar">-</span>
-            </div>
-            <div class="info-row">
-              <span class="label">农历:</span>
-              <span id="result-lunar">-</span>
-            </div>
-            <div class="info-row">
-              <span class="label">生肖:</span>
-              <span id="result-zodiac">-</span>
-            </div>
-            <div class="info-row">
-              <span class="label">日主:</span>
-              <span id="result-daymaster" class="highlight">-</span>
-            </div>
-          </div>
+          <h2 class="card-title-clickable">八字排盘</h2>
+          <div id="bazi-display"></div>
+        </div>
 
-          <!-- 四柱表格 -->
-          <div class="pillars-table">
-            <div class="pillar-header">
-              <span></span>
-              <span>年柱</span>
-              <span>月柱</span>
-              <span>日柱</span>
-              <span>时柱</span>
-            </div>
-            <div class="pillar-row">
-              <span class="row-label">天干</span>
-              <span id="year-stem" class="stem">-</span>
-              <span id="month-stem" class="stem">-</span>
-              <span id="day-stem" class="stem day-stem">-</span>
-              <span id="hour-stem" class="stem">-</span>
-            </div>
-            <div class="pillar-row">
-              <span class="row-label">十神</span>
-              <span id="year-shishen" class="shishen">-</span>
-              <span id="month-shishen" class="shishen">-</span>
-              <span id="day-shishen" class="shishen">-</span>
-              <span id="hour-shishen" class="shishen">-</span>
-            </div>
-            <div class="pillar-row">
-              <span class="row-label">地支</span>
-              <span id="year-branch" class="branch">-</span>
-              <span id="month-branch" class="branch">-</span>
-              <span id="day-branch" class="branch">-</span>
-              <span id="hour-branch" class="branch">-</span>
-            </div>
-            <div class="pillar-row hidden-stems">
-              <span class="row-label">藏干</span>
-              <span id="year-hidden" class="hidden-stem">-</span>
-              <span id="month-hidden" class="hidden-stem">-</span>
-              <span id="day-hidden" class="hidden-stem">-</span>
-              <span id="hour-hidden" class="hidden-stem">-</span>
-            </div>
-          </div>
+        <!-- 神煞 -->
+        <div class="card shensha-card">
+          <h2 class="card-title-clickable" onclick="openModal('shensha')">神煞</h2>
+          <div id="shensha-section"></div>
+        </div>
 
-          <!-- 神煞 -->
-          <div class="shensha-section">
-            <h3>神煞</h3>
-            <div id="shensha-list" class="tag-list"></div>
-          </div>
+        <!-- 纳音 -->
+        <div class="card nayin-card">
+          <h2 class="card-title-clickable" onclick="openModal('nayin')">纳音</h2>
+          <div id="nayin-section"></div>
+        </div>
+
+        <!-- 命宫身宫 -->
+        <div class="card palace-card">
+          <h2 class="card-title-clickable" onclick="openModal('palace')">命宫身宫</h2>
+          <div id="palace-section"></div>
         </div>
 
         <!-- 五维分析 -->
         <div class="card analysis-card">
-          <h2>五维分析</h2>
+          <h2 class="card-title-clickable" onclick="openModal('analysis')">五维分析</h2>
           <div class="chart-container">
             <canvas id="radar-chart"></canvas>
           </div>
-
-          <div id="dimensions-list" class="dimensions-list">
-            <!-- 动态生成 -->
-          </div>
-        </div>
-
-        <!-- AI智能解盘 -->
-        <div class="card ai-card">
-          <div class="ai-header">
-            <h2>AI智能解盘</h2>
-            <div class="ai-controls">
-              <select id="school-selector" class="school-select">
-                <option value="wangshuai">旺衰派 - 入门推荐</option>
-                <option value="ziping">子平派 - 经典正统</option>
-                <option value="blind">盲派 - 实战口诀</option>
-                <option value="geju">格局派 - 格局成败</option>
-                <option value="xinpai">新派 - 现代创新</option>
-              </select>
-              <button id="ai-config-btn" class="btn-icon" title="AI配置">⚙️</button>
-            </div>
-          </div>
-
-          <div id="school-desc" class="school-desc">
-            旺衰派：以日主强弱为核心，适合初学者入门
-          </div>
-
-          <div id="ai-chat-container" class="ai-chat-container">
-            <div id="ai-messages" class="ai-messages">
-              <div class="ai-message system">
-                <div class="message-content">
-                  您好！我是AI八字解盘助手。请选择上方的命理流派，然后向我提问关于八字的问题。
-                  <br><br>
-                  您可以问我：
-                  <ul>
-                    <li>这个八字的事业怎么样？</li>
-                    <li>我的财运如何？</li>
-                    <li>这个八字适合什么职业？</li>
-                    <li>婚姻感情如何分析？</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div class="ai-input-area">
-              <div class="quick-questions">
-                <button class="quick-q" data-q="分析这个八字的事业发展">事业发展</button>
-                <button class="quick-q" data-q="这个八字财富运势如何">财富运势</button>
-                <button class="quick-q" data-q="分析性格特点">性格特点</button>
-                <button class="quick-q" data-q="健康状况分析">健康状况</button>
-              </div>
-              <div class="input-row">
-                <input type="text" id="ai-input" placeholder="输入您的问题..." maxlength="500">
-                <button id="ai-send-btn" class="btn-primary">
-                  <span class="send-icon">➤</span>
-                </button>
-              </div>
-              <div class="ai-disclaimer">
-                <small>AI解盘仅供参考，八字命理需要结合实际情况综合分析</small>
-              </div>
-            </div>
-          </div>
+          <div id="dimensions-list" class="dimensions-list"></div>
         </div>
 
         <!-- 大运 -->
         <div class="card dayun-card">
-          <h2>大运</h2>
+          <h2 class="card-title-clickable" onclick="openModal('dayun')">大运</h2>
           <div id="dayun-start" class="dayun-info"></div>
           <div class="dayun-table-wrapper">
             <table id="dayun-table" class="dayun-table">
@@ -311,7 +764,7 @@
 
         <!-- 综合建议 -->
         <div class="card advice-card">
-          <h2>综合建议</h2>
+          <h2 class="card-title-clickable" onclick="openModal('advice')">综合建议</h2>
           <ul id="advice-list"></ul>
         </div>
       </section>
@@ -322,59 +775,16 @@
     </footer>
   </div>
 
-  <script src="js/app.js"></script>
-  <script src="js/ai-chat.js"></script>
+  <!-- AI悬浮面板 -->
+  <div id="ai-floating-container"></div>
 
-  <!-- AI配置弹窗 -->
-  <div id="ai-config-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>AI配置</h3>
-        <button class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>AI服务商</label>
-          <select id="ai-provider">
-            <option value="openai">OpenAI (GPT-4)</option>
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="qwen">通义千问 (千问百炼标准版)</option>
-            <option value="qwen-coding">通义千问 (Coding Plane)</option>
-            <option value="custom">自定义</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>API Key <small>(可选，不填使用默认配置)</small></label>
-          <input type="password" id="ai-apikey" placeholder="sk-...">
-          <small id="apikey-help" class="help-text">OpenAI API Key 格式: sk-...</small>
-        </div>
-
-        <div class="form-group baseurl-config hidden">
-          <label>API地址 <small>(可选，用于自定义或Coding Plane)</small></label>
-          <input type="text" id="ai-baseurl" placeholder="https://api.example.com/v1">
-          <small class="help-text">Coding Plane默认: https://coding.dashscope.aliyuncs.com/v1</small>
-        </div>
-
-        <div class="form-group">
-          <label>模型</label>
-          <select id="ai-model">
-            <!-- 动态加载 -->
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>温度 (Temperature): <span id="temp-value">0.7</span></label>
-          <input type="range" id="ai-temperature" min="0" max="2" step="0.1" value="0.7">
-          <small>较低值更确定，较高值更创造性</small>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="ai-config-save" class="btn-primary">保存配置</button>
-        <button id="ai-config-cancel" class="btn-secondary">取消</button>
-      </div>
-    </div>
-  </div>
+  <!-- 核心脚本 -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/components/Modal.js"></script>
+  <script src="js/components/FloatingPanel.js"></script>
+  <script src="js/components/BaziDisplay.js"></script>
+  <script src="js/components/RadarChart.js"></script>
+  <script src="js/pages/main.js"></script>
 </body>
 </html>

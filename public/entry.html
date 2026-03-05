@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>八字分析 - 输入信息</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/entry.css">
+</head>
+<body>
+    <div class="entry-container">
+        <!-- Logo区域 -->
+        <div class="logo-section">
+            <div class="logo">
+                <svg viewBox="0 0 100 100" width="80" height="80">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--primary)" stroke-width="2"/>
+                    <path d="M50 20 L50 80 M20 50 L80 50" stroke="var(--primary)" stroke-width="2"/>
+                    <circle cx="50" cy="20" r="5" fill="var(--primary)"/>
+                    <circle cx="50" cy="80" r="5" fill="var(--primary)"/>
+                    <circle cx="20" cy="50" r="5" fill="var(--primary)"/>
+                    <circle cx="80" cy="50" r="5" fill="var(--primary)"/>
+                </svg>
+            </div>
+            <h1 class="app-title">八字分析</h1>
+            <p class="app-subtitle">探索命运的奥秘</p>
+        </div>
+
+        <!-- 输入类型选择 -->
+        <div class="input-type-selector">
+            <button class="type-btn active" data-type="solar">
+                <span class="icon">☀️</span>
+                <span class="label">阳历</span>
+            </button>
+            <button class="type-btn" data-type="lunar">
+                <span class="icon">🌙</span>
+                <span class="label">农历</span>
+            </button>
+            <button class="type-btn" data-type="bazi">
+                <span class="icon">📜</span>
+                <span class="label">八字</span>
+            </button>
+        </div>
+
+        <!-- 输入表单区域 -->
+        <div class="input-form-container">
+            <!-- 阳历输入 -->
+            <div class="input-form active" id="solar-form">
+                <div class="form-group">
+                    <label for="solar-date">出生日期</label>
+                    <input type="date" id="solar-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="solar-time">出生时间</label>
+                    <input type="time" id="solar-time" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="use-true-solar-time">
+                        <span class="checkmark"></span>
+                        使用真太阳时
+                    </label>
+                </div>
+                <div class="form-group hidden" id="longitude-group">
+                    <label for="longitude">出生经度</label>
+                    <input type="number" id="longitude" min="-180" max="180" step="0.01" placeholder="例如：116.4（北京）">
+                </div>
+            </div>
+
+            <!-- 农历输入 -->
+            <div class="input-form" id="lunar-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lunar-year">农历年份</label>
+                        <select id="lunar-year" required>
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lunar-month">农历月份</label>
+                        <select id="lunar-month" required>
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lunar-day">农历日</label>
+                        <select id="lunar-day" required>
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="is-leap-month" style="visibility: hidden;">闰月</label>
+                        <label class="checkbox-label" style="margin-top: 8px;">
+                            <input type="checkbox" id="is-leap-month">
+                            <span class="checkmark"></span>
+                            闰月
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lunar-hour">时辰</label>
+                        <select id="lunar-hour" required>
+                            <option value="">请选择</option>
+                            <option value="0">子时 (23:00-01:00)</option>
+                            <option value="1">丑时 (01:00-03:00)</option>
+                            <option value="2">寅时 (03:00-05:00)</option>
+                            <option value="3">卯时 (05:00-07:00)</option>
+                            <option value="4">辰时 (07:00-09:00)</option>
+                            <option value="5">巳时 (09:00-11:00)</option>
+                            <option value="6">午时 (11:00-13:00)</option>
+                            <option value="7">未时 (13:00-15:00)</option>
+                            <option value="8">申时 (15:00-17:00)</option>
+                            <option value="9">酉时 (17:00-19:00)</option>
+                            <option value="10">戌时 (19:00-21:00)</option>
+                            <option value="11">亥时 (21:00-23:00)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lunar-minute">具体分钟 (可选)</label>
+                        <input type="time" id="lunar-minute" value="00:00">
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">用于精确计算，默认为00:00</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 八字直接输入 -->
+            <div class="input-form" id="bazi-form">
+                <div class="form-group">
+                    <label for="bazi-input">八字输入</label>
+                    <textarea 
+                        id="bazi-input" 
+                        rows="3" 
+                        placeholder="请输入八字，支持多种格式：
+甲子年丙寅月戊辰日庚午时
+甲子 丙寅 戊辰 庚午
+甲子,丙寅,戊辰,庚午
+甲子丙寅戊辰庚午"
+                        required></textarea>
+                </div>
+                <div class="bazi-examples">
+                    <p class="hint">示例：</p>
+                    <div class="example-list">
+                        <span class="example" data-example="甲子年丙寅月戊辰日庚午时">甲子年丙寅月戊辰日庚午时</span>
+                        <span class="example" data-example="甲子 丙寅 戊辰 庚午">甲子 丙寅 戊辰 庚午</span>
+                        <span class="example" data-example="甲子,丙寅,戊辰,庚午">甲子,丙寅,戊辰,庚午</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 性别选择 -->
+        <div class="gender-selector">
+            <div class="form-group">
+                <label>性别</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="gender" value="male" required>
+                        <span class="radio-mark"></span>
+                        <span class="radio-text">男</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="gender" value="female" required>
+                        <span class="radio-mark"></span>
+                        <span class="radio-text">女</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析按钮 -->
+        <div class="action-section">
+            <button id="analyze-btn" class="analyze-btn" disabled>
+                <span class="btn-text">开始分析</span>
+                <span class="btn-icon">→</span>
+            </button>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-section">
+            <div class="history-header">
+                <h3>最近分析</h3>
+                <button id="clear-history" class="clear-btn">清空</button>
+            </div>
+            <div id="history-list" class="history-list">
+                <p class="no-history">暂无历史记录</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>正在分析中...</p>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="js/core/state.js"></script>
+    <script src="js/core/router.js"></script>
+    <script src="js/core/api.js"></script>
+    <script src="js/utils/bazi-parser.js"></script>
+    <script src="js/pages/entry.js"></script>
+</body>
+</html>
